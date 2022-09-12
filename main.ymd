@@ -16,5 +16,8 @@
 [h3] Interaction
 <div><svg id="interaction" width="800" height="600"></svg></div>
 
+[h3] TF-IDF
+<pre id="tfidf"></pre>
+
 
 [require](main.js)

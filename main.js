@@ -29,7 +29,7 @@ function string_to_token(text, aliases) {
         for (const name in names)
             stop_words.add('@' + name)
 
-    for (const stop_word of stop_words)
+    for (const stop_word of Array.from(stop_words).sort((a, b) => b.length - a.length)) // remove longest first (because some use names that are prefixes of others)
         text = text.replaceAll(stop_word, " ")
 
     const is_chinese = c => /\p{Script=Han}/u.test(c)
@@ -67,7 +67,7 @@ function string_to_token(text, aliases) {
                     break
 
                 case is_english(char): {
-                    state.value += char
+                    state = new English(state.value + char)
                     break
                 }
 
@@ -317,6 +317,47 @@ async function show_interation(messages, aliases) {
 
 const get_representitive_alias = aliases => Object.fromEntries(Object.entries(aliases).map(([id, name_counts]) => [id, Object.entries(name_counts).sort((a, b) => b[1] - a[1])[0][0]]))
 
+const get_ids_by_message_count = aliases => Object.entries(aliases).map(([id, name_counts]) => [id, sum(Object.values(name_counts))]).sort((a, b) => b[1] - a[1]).map(([id, ]) => id)
+
+function calc_tfidf(messages) {
+    const tf = Object.create(null) // { id: { token: count } }
+    const df = Object.create(null) // { token: Set(id) }
+
+    for (const { id, tokens } of messages) {
+        const words = new Set(tokens.map(token => token.value))
+        tf[id] = tf[id] ?? Object.create(null)
+
+        for (const word of words) {
+            tf[id][word] = (tf[id][word] ?? 0) + 1
+            df[word] = df[word] ?? new Set()
+            df[word].add(id)
+        }
+    }
+
+    const tfidf = Object.create(null) // { id: { token: tfidf } }
+    for (const id in tf) {
+        tfidf[id] = tfidf[id] ?? Object.create(null)
+        const total_words = sum(Object.values(tf[id]))
+        for (const word in tf[id]) if (df[word].size > 1) // at least said by two people (to filter some non-word words)
+            tfidf[id][word] = tf[id][word] / total_words * Math.log(Object.keys(tf).length / (df[word].size + 1))
+    }
+
+    return tfidf
+}
+
+async function show_tfidf(messages, aliases) {
+    const representitive_alias = get_representitive_alias(aliases)
+    const tfidf = calc_tfidf(messages)
+
+    let result = ''
+
+    for (const id of get_ids_by_message_count(aliases)) if (tfidf[id])
+        result += representitive_alias[id] + ': ' + Object.entries(tfidf[id]).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([word, ]) => word).join(', ') + '\n'
+
+    document.getElementById('tfidf').innerText = result
+}
+
+
 async function main() {
     const file = document.getElementById("data").files[0]
     const text = await file.text()
@@ -326,7 +367,8 @@ async function main() {
         document.getElementById("bot")?.value.split(",") ?? [],
         document.getElementById("bot2")?.value.split(",") ?? []
     ))
-    show_interation(messages, aliases)
+    await show_interation(messages, aliases)
+    await show_tfidf(messages, aliases)
 }
 
 async function test() {
@@ -346,7 +388,7 @@ async function test() {
     // const cold_sessions = detect_session(messages, 30 * 60)
     // console.log(cold_sessions.length, mean(cold_sessions.map(s => s.length)))
 
-
+    console.log(calc_tfidf(messages))
 }
 
 if (typeof Deno != 'undefined')
