@@ -238,7 +238,7 @@ async function show_interation(messages, aliases) {
     const svg = d3.select("svg")
     const width = +svg.attr("width")
     const height = +svg.attr("height")
-    const color = d3.scaleOrdinal(d3.schemeCategory20)
+    const color = d3.scaleOrdinal(d3.schemeSet1)
 
     const simulation = d3.forceSimulation()
         .force("link", d3.forceLink().id(d => d.id))
@@ -265,18 +265,14 @@ async function show_interation(messages, aliases) {
 
     const drag_handler = d3.drag()
         .on("start", d => {
-            if (!d3.event.active)
-                simulation.alphaTarget(0.3).restart()
-            d.fx = d.x
-            d.fy = d.y
+            simulation.alphaTarget(0.3).restart()
         })
-        .on("drag", d => {
-            d.fx = d3.event.x
-            d.fy = d3.event.y
+        .on("drag", (e, d) => {
+            d.fx = e.x
+            d.fy = e.y
         })
-        .on("end", d => {
-            if (!d3.event.active)
-                simulation.alphaTarget(0)
+        .on("end", (e, d) => {
+            simulation.alphaTarget(0)
             d.fx = null
             d.fy = null
         })

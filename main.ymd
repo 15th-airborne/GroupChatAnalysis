@@ -4,7 +4,7 @@
 
 [require](main.less)
 
-<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 
 <label for="bot">交互式机器人id（逗号分隔）:</label>
 <input id="bot" type="text"><br>
