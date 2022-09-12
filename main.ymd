@@ -1,0 +1,20 @@
+[mixin] vue
+
+[title]: 群聊分析
+
+[require](main.less)
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<label for="bot">交互式机器人id（逗号分隔）:</label>
+<input id="bot" type="text"><br>
+<label for="bot2">非交互式机器人id（逗号分隔）:</label>
+<input id="bot2" type="text" value="10000,1000000"><br>
+<input id="data" type="file" name="data">
+
+
+[h3] Interaction
+<div><svg id="interaction" width="800" height="600"></svg></div>
+
+
+[require](main.js)
